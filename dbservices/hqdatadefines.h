@@ -1,4 +1,4 @@
-#ifndef HQDATADEFINES
+﻿#ifndef HQDATADEFINES
 #define HQDATADEFINES
 
 #include <QString>
@@ -19,6 +19,7 @@
 #define         TABLE_PROFIT                        "share_profit"
 #define         TABLE_BLOCK_SHARE                   "block_share"
 #define         TABLE_SHARE_HISTORY_COUNTER                 "share_history_counter"
+#define         TABLE_SHARE_EXCHANGE_RECORD         "exchange_record"
 
 //列名
 #define         HQ_TABLE_COL_ID                 "id"
@@ -26,6 +27,7 @@
 #define         HQ_TABLE_COL_NAME               "name"
 #define         HQ_TABLE_COL_PY_ABBR            "abbr"
 #define         HQ_TABLE_COL_TYPE               "type"
+#define         HQ_TABLE_COL_LISTTIME           "list_time"
 #define         HQ_TABLE_COL_PROFIT             "profit"
 #define         HQ_TABLE_COL_TOTALMNT           "total_amount"
 #define         HQ_TABLE_COL_MUTAL              "mutable_amount"
@@ -80,6 +82,17 @@
 #define         HQ_TABLE_COL_FOREIGN_HOLD_CHANGE_WEEK           "foreign_chg_week"
 #define         HQ_TABLE_COL_FOREIGN_HOLD_CHANGE_MONTH          "foreign_chg_month"
 #define         HQ_TABLE_COL_FOREIGN_HOLD_CHANGE_YEAR           "foreign_chg_year"
+#define         HQ_TABLE_COL_EXCHANGE_TYPE                      "exchange_type"
+#define         HQ_TABLE_COL_EXCHANGE_COUNT                       "exchange_count"
+#define         HQ_TABLE_COL_EXCHANGE_PRICE                     "exchange_price"
+#define         HQ_TABLE_COL_EXCHANGE_TOTAL                     "exchange_total"
+#define         HQ_TABLE_COL_EXCHANGE_YONGJIN                   "exchange_yongjin"
+#define         HQ_TABLE_COL_EXCHANGE_YINHUASUI                   "exchange_yinhuasui"
+#define         HQ_TABLE_COL_EXCHANGE_OTHER                   "exchange_others"
+#define         HQ_TABLE_COL_EXCHANGE_NETINCOME                     "echange_netincome"
+#define         HQ_TABLE_COL_EXCHANGE_SERIAL_NUM                   "exchange_serial_num"
+
+
 
 //typedef         ShareData               ShareData;
 //typedef         ShareDataList           ShareDataList;
@@ -109,10 +122,115 @@ struct  foreignHolder{
     }
 };
 
+enum DB_DATA_TYPE{
+    DB_INTEGER = 0,
+    DB_VARCHAR,
+    DB_BOOL,
+    DB_NUMERIC,
+};
+
 struct TABLE_COL_DEF
 {
-    QString mKey;
-    QString mDef;
+public:
+
+    QString         mName;
+    int             mType;
+    bool            mPrimaryKey;
+    bool            mAutoIncrement;
+    bool            mNull;
+    int             mStrSize;
+
+    TABLE_COL_DEF(const QString& name, int type,  bool _null = true, int strsize = 0, bool primary = false, bool autoinc = false)
+    {
+        mName = name;
+        mType = type;
+        mPrimaryKey = primary;
+        mAutoIncrement = autoinc;
+        mNull = _null;
+        mStrSize = strsize;
+    }
+
+    TABLE_COL_DEF(const QString& name, const QString& def)
+    {
+        mStrSize = 0;
+        mName = name;
+        if(def.contains("INTEGER")) mType = DB_INTEGER;
+        if(def.contains("BOOL")) mType = DB_BOOL;
+        if(def.contains("NUMERIC")) mType = DB_NUMERIC;
+        if(def.contains("VARCHAR"))
+        {
+            mType = DB_VARCHAR;
+            int index = def.indexOf("(");
+            if(index >= 0)
+            {
+                int end = def.indexOf(")", index);
+                if(end >= 0)
+                {
+                    mStrSize = def.mid(index+ 1, end - index - 1).toInt();
+                }
+            }
+        }
+        mPrimaryKey = false;
+        if(def.contains("PRIMARY") && def.contains("KEY")) mPrimaryKey = true;
+        mAutoIncrement = false;
+        if(def.contains("AUTOINCREMENT")) mAutoIncrement = true;
+        mNull = true;
+        if(def.contains("NOT NULL")) mNull = false;
+    }
+
+    TABLE_COL_DEF() {
+        mName = "";
+        mType = DB_INTEGER;
+        mPrimaryKey = false;
+        mAutoIncrement = false;
+        mNull = true;
+        mStrSize = 0;
+    }
+
+    QString toSTring() const
+    {
+        QStringList list;
+        if(mType == DB_INTEGER)
+        {
+            list.append("INTEGER");
+        } else if(mType == DB_BOOL)
+        {
+            list.append("BOOL");
+        } else if(mType == DB_NUMERIC)
+        {
+            list.append("NUMERIC");
+        } else if(mType == DB_VARCHAR)
+        {
+            list.append(QString("VARCHAR(%1)").arg(mStrSize));
+        }
+
+        if(mPrimaryKey)
+        {
+            list.append("PRIMARY KEY");
+        }
+        if(mAutoIncrement)
+        {
+            list.append("AUTOINCREMENT");
+        }
+        if(mNull)
+        {
+            list.append("NULL");
+        } else
+        {
+            list.append("NOT NULL");
+        }
+
+        return list.join(" ");
+    }
+
+    bool operator==(const TABLE_COL_DEF& other)
+    {
+        return this->mName == other.mName && this->mType == other.mType
+                && this->mPrimaryKey == other.mPrimaryKey
+//                && this->mAutoIncrement == other.mAutoIncrement
+                && this->mNull == other.mNull
+                && this->mStrSize == other.mStrSize;
+    }
 };
 
 typedef QList<TABLE_COL_DEF>        TableColList;

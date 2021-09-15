@@ -1,4 +1,4 @@
-#ifndef HQDBDATABASE_H
+﻿#ifndef HQDBDATABASE_H
 #define HQDBDATABASE_H
 
 #include <QObject>
@@ -31,6 +31,8 @@ enum    HQ_DATA_COMPARE{
     HQ_COMPARE_GREAT,
     HQ_COMPARE_STRLIKE,
     HQ_COMPARE_TEXTIN,
+    HQ_COMPARE_LESS_EQUAL,
+    HQ_COMPARE_GREAT_EQUAL,
 };
 
 struct HQ_COL_VAL{
@@ -111,8 +113,8 @@ public:
     explicit HQDBDataBase(QObject *parent = 0);
     ~HQDBDataBase();
     QString getErrorString();
-    ShareWorkingDate getLastUpdateDateOfTable(const QString &table);
-    ShareWorkingDate getLastHistoryDateOfShare(/*const QString& code*/);
+    QDate getLastUpdateDateOfTable(const QString &table);
+    QDate getLastHistoryDateOfShare(/*const QString& code*/);
     bool isDBOK();
     //板块
     bool queryBlockDataList(BlockDataMap& list, int type = 0);
@@ -128,8 +130,8 @@ public:
 
     //基本数据更新
     bool updateShareBasicInfo(const ShareDataList& dataList);
-    bool queryShareBasicInfo(ShareDataMap& map);
-    bool delShareBasicInfo(const QString& code);
+    bool queryShareBasicInfo(ShareDataMap& map, const QStringList& favlist);
+    bool delShareBasicInfo(const QString& code = QString());
     bool getSimilarCodeOfText(QStringList& codes, const QString& text);
 
     //自选股更新
@@ -148,18 +150,18 @@ public:
     //历史日线数据更新
     bool queryShareHistroyUpdatedDates(QList<QDate>& list);
     bool updateShareHistory(const ShareDataList& dataList, int mode);
-    bool queryShareHistory(ShareDataList& list, const QString& share_code, const ShareWorkingDate& start = ShareWorkingDate(), const ShareWorkingDate& end = ShareWorkingDate());
-    bool delShareHistory(const QString& share_code, const ShareWorkingDate& start, const ShareWorkingDate& end);
+    bool queryShareHistory(ShareDataList& list, const QString& share_code, const QDate& start = QDate(), const QDate& end = QDate());
+    bool delShareHistory(const QString& share_code, const QDate& start, const QDate& end);
     double getMultiDaysChangePercent(const QString &code, HISTORY_CHANGEPERCENT type );
     double getLastMoney(const QString& code);
     bool   getLastForeignVol(qint64& vol, qint64& vol_chg, const QString& code);
     //获取指定日期的成交数据
-    bool queryHistoryInfoFromDate(ShareDataList& list, const QString& code, const ShareWorkingDate& date);
+    bool queryHistoryInfoFromDate(ShareDataList& list, const QString& code, const QDate& date);
 
     //股东明细信息信息
     bool updateShareHolder(const ShareHolderList& dataList);
-    bool queryShareHolder(ShareHolderList& list, const QString& share_code, const QString& holder_code, const ShareWorkingDate& date);
-    bool delShareHolder(const QString& share_code, const QString& holder_code, const ShareWorkingDate& date);
+    bool queryShareHolder(ShareHolderList& list, const QString& share_code, const QString& holder_code, const QDate& date);
+    bool delShareHolder(const QString& share_code, const QString& holder_code, const QDate& date);
 
     //财务信息操作
     bool updateShareFinance(const FinancialDataList& dataList);
@@ -168,23 +170,31 @@ public:
 
     //分红送配信息操作
     bool updateShareBonus(const ShareBonusList& bonusList);
-    bool queryShareBonus(QList<ShareBonus>& list, const QString& code, const ShareWorkingDate& date);
-    bool delShareBonus(const QString& code, const ShareWorkingDate& date);
+    bool queryShareBonus(QList<ShareBonus>& list, const QString& code, const QDate& date);
+    bool delShareBonus(const QString& code, const QDate& date);
 
     //数据表更新日期操作
-    bool updateDBUpdateDate(const ShareWorkingDate& date, const QString& table);
-    bool queryDBUpdateDate(ShareWorkingDate& date, const QString& table);
+    bool updateDBUpdateDate(const QDate& date, const QString& table);
+    bool queryDBUpdateDate(QDate& date, const QString& table);
     bool delDBUpdateDate(const QString& table);
 
     //沪深港信息TOP10
     bool updateShareHsgtTop10List(const ShareHsgtList& dataList);
-    bool queryShareHsgtTop10List(ShareHsgtList& list, const QString& code, const ShareWorkingDate& date);
-    bool delShareHsgtTop10(const QString& code, const ShareWorkingDate& date);
+    bool queryShareHsgtTop10List(ShareHsgtList& list, const QString& code, const QDate& date);
+    bool delShareHsgtTop10(const QString& code, const QDate& date);
+
+    //明细
+    bool updateExhangeRecordList(const QList<ShareExchangeData>& list);
+    bool queryExchangeRecord(QList<ShareExchangeData>& list, int& total_page, int page, const QString& code, const QString& start_date, const QString& end_date);
+    bool deleteExchangeRecord(const QString& code, const QString& start_date, const QString& end_date);
+
+
 
 
 private:
     bool initSqlDB();
     //创建数据库需要的各类表
+    TableColList queryTableDef(const QString& table);
     //板块明细
     bool createBlockTable();
     //基本信息
@@ -192,6 +202,7 @@ private:
     bool createShareFavoriteTable();
     bool createShareProfitTable();
     bool createShareBlockTable();
+    bool createShareExchangeRecordTable();
     //历史日线数据表
     bool createShareHistoryInfoTable(const QString& code);
     //股东明细表
@@ -207,8 +218,9 @@ private:
     //各个表的最后更新日期
     bool createDBUpdateDateTable();
 
-    bool isTableExist(const QString &pTable);
+    bool tableExist(const QString &pTable);
     bool createTable(const QString& pTable, const TableColList& cols);
+    bool deleteTable(const QString& pTable);
 
     //表的通用操作
     bool updateTable(const QString& tableName, const DBColValList& values, const DBColValList& key, bool check = true );

@@ -30,7 +30,12 @@ QDate QHKExchangeVolDataProcess::getVolInfoFromHKEX(ShareForignVolFileDataList& 
     QString mktstr = (mkt == 0? "sh":"sz");
     QByteArray value = QHttpGet::getContentOfURLWithPost(QString(HK_URL).arg(mktstr).arg(mktstr), postVal.toUtf8(), 600);
     qDebug()<<"date :"<<date.toString("yyyy-MM-dd")<<" has content length:"<<value.length();
-    if(value.length() < 10000) qDebug()<<value;
+    QFile file(QString("%1.txt").arg(date.toString("yyyy-MM-dd")));
+    if(file.open(QIODevice::WriteOnly))
+    {
+        file.write(value);
+        file.close();
+    }
 
 #ifdef TEST
     qDebug()<<"recv len:"<<value.length();
@@ -250,7 +255,7 @@ void QHKExchangeVolDataProcess::getVolofDate(ShareForignVolFileDataList &list, c
             }
         }
 
-        qDebug()<<"hk:"<<date.toString("yyyyMMdd")<<list.size();
+//        qDebug()<<"hk:"<<date.toString("yyyyMMdd")<<list.size();
         if(list.size() > 0)
         {
             saveData(date, list);
@@ -270,10 +275,11 @@ void QHKExchangeVolDataProcess::run()
     } else
     {
         //如果是历史交易日,检查是不是在历史的交易日中
-        if(!ShareWorkingDate::getHisWorkingDay().contains(mDate)) return;
+        if(!TradeDateMgr::instance()->isTradeDay(mDate)) return;
     }
     //开始获取对应的日期的记录
     getVolofDate(list, mDate);
+//    qDebug()<<mDate.toString("yyyy-MM-dd")<<list.size();
     if(mParent)
     {
         QMetaObject::invokeMethod(mParent,\

@@ -13,6 +13,7 @@
 class HQTaskMagrCenter;
 class QIndexWidget;
 class QShareForeignVolTableWidget;
+class QAndroidListWidget;
 
 typedef struct strColDisplay
 {
@@ -92,6 +93,7 @@ public slots:
     void slotSetSpecialConcern(const QString& code);
     void showMini();
     void showMax();
+    void slotDoubClickedCode(const QString& code);
 private slots:
     void on_zjlxBtn_clicked();
 
@@ -141,7 +143,8 @@ private:
     QDataMgrWidget      *mDataMgrWidget;
     QShareForeignVolTableWidget *mForeignVolTableWidget;
     bool                mIsMini;
-    QWidget*                mHqWidget;
+    QAndroidListWidget  *mCtrlListWidget;
+    QList<QWidget*>             mListWidget;
 };
 
 #endif // DIALOG_H

@@ -7,6 +7,13 @@
 #include "utils/profiles.h"
 
 
+enum HqInfoSysStatus{
+    HQ_NotOpen = 0,
+    HQ_InCharge,
+    HQ_Closed,
+};
+
+
 #define DATA_SERVICE HqInfoService::instance()
 
 class HqInfoService : public QObject
@@ -17,24 +24,30 @@ protected:
     ~HqInfoService();
 
 public:
-    ShareWorkingDate  getLastUpdateDateOfTable(const QString& table);
+    QDate  getLastUpdateDateOfTable(const QString& table);
     void        setHistoryInfoCount(int count) {mHistoryInfoCount = count;}
+
+    QStringList getHshtTop10List() const {return mHsgtTop10Kyes;}
+    int         getSystemStatus() const {return mSystemStatus;}
+    void        setSystemStatus(int sts) {mSystemStatus = sts;}
 public:
     bool   isDBInitOk();
     friend class CGarbo;
     static HqInfoService* instance();
-    ShareData* getShareData(const QString& code);
+    ShareData& getShareData(const QString& code);
+    ShareDataList   getShareDataList(int type);
+    ShareDataList getShareDataList();
     double getProfit(const QString& code);
     foreignHolder amountForeigner(const QString& code);
     QStringList  getExchangeCodeList();
-    QStringList  getAllShareCodes() {return mRealShareMap.keys();}
-    ShareWorkingDate  getLastUpdateDateOfHSGT();
-    ShareWorkingDate  getLastUpdateDateOfHSGTVol();
-    ShareWorkingDate  getLastUpdateDateOfBasicInfo();
-    ShareWorkingDate  getLastUpdateDateOfBonusInfo();
-    ShareWorkingDate  getLastUpdateDateOfHsgtTop10();
-    ShareWorkingDate  getLastUpdateDateOfFinanceInfo();
-    ShareWorkingDate  getLastUpdateDateOfHistoryInfo();
+    QStringList  getAllShareCodes() {return mRealShareData.keys();}
+    QDate  getLastUpdateDateOfHSGT();
+    QDate  getLastUpdateDateOfHSGTVol();
+    QDate  getLastUpdateDateOfBasicInfo();
+    QDate  getLastUpdateDateOfBonusInfo();
+    QDate  getLastUpdateDateOfHsgtTop10();
+    QDate  getLastUpdateDateOfFinanceInfo();
+    QDate  getLastUpdateDateOfHistoryInfo();
     bool   GetHistoryInfoWithDate(const QString& table, const QDate& date, double& close, double& money, qint64& total_share, qint64& mutalble_share);
     double   GetMultiDaysChangePercent(const QString& table, int days);
     void   GetForeignVolChange(const QString& code, qint64& cur, qint64& pre);
@@ -83,7 +96,7 @@ signals:
     void signalSendShareHistoryZjlxInfo(const ShareDataList &list);
 
     void signalRecvShareHistoryInfos(const ShareDataList& list, int mode);
-    void signalSendShareHistoryUpdateDate(const ShareWorkingDate& date, bool update);
+    void signalSendShareHistoryUpdateDate(const QDate& date, bool update);
     void signalQueryShareHistoryUpdateDateList();
     void signalSendShareHistoryUpdateDateList(const QList<QDate>& list);
 
@@ -95,19 +108,9 @@ signals:
     void signalQueryAllShareBasicInfo();
     void signalAddShareBasicInfo(const ShareData& data);
     void signalAddShareBasicInfoList(const ShareDataList& list);
-    void signalUpdateShareinfoWithHistory(const QString& code,\
-                                          double lastMoney,\
-                                          double last3Change,\
-                                          double last5Change,\
-                                          double last10Change,\
-                                          double lastMonthChange,\
-                                          double lastYearChange,\
-                                          qint64 vol,\
-                                          qint64 vol_chnage,\
-                                          const ShareDataList& list);
     void signalUpdateStkProfitList(const ShareDataList& list);
     void signalInitShareRealInfos(const QStringList& codes);
-    void signalUpdateShareCounter(const ShareHistoryCounter& counter);
+    void signalUpdateShareCounter(const QList<ShareHistoryCounter>& counter);
     //自选股
     void signalSetFavCode(const QString& code);
     void signalSaveFavCode(const QString& code, bool fav);
@@ -116,10 +119,12 @@ signals:
     void signalUpdateShareAmountByForeigner();
 
     void signalUpdateShareHsgtTop10Info(const ShareHsgtList& list);
-    void signalSendLastHSGTUpdateDate(const ShareWorkingDate& date);
-    void signalQueryShareHsgtTop10List(const QString& code, const ShareWorkingDate& date = ShareWorkingDate());
-    void signalSendShareHsgtTop10List(const ShareHsgtList& list);
-
+    void signalUpdateHsgtTop10Keys(const QDate& date);
+    void signalSendLastHSGTUpdateDate(const QDate& date);
+    void signalQueryShareHsgtTop10List(const QString& code, const QDate& date = QDate());
+    void signalSendShareHsgtTop10List(const ShareHsgtList& list, const QString& code, const QDate& date);
+    void signalQueryLatestHsgtData();
+    void signalSendLGTVolDataList(const QList<ShareForeignVolCounter>& list, const QString& date );
     //实时数据查询信息获取
     void signalSearchCodesOfText(const QString& text);
     void signalSendSearchCodesOfText(const QStringList& codes);
@@ -130,9 +135,19 @@ signals:
     void signalQueryShareFinanceInfo(const QStringList& list = QStringList());
     //分红数据
     void signalUpdateShareBonusInfo(const ShareBonusList& list);
-    void signalQueryShareFHSP(const QString& code = QString(), const ShareWorkingDate& date = ShareWorkingDate());
+    void signalQueryShareFHSP(const QString& code = QString(), const QDate& date = QDate());
 
     void signalUpdateShareCloseDate(const QList<QDate>& list );
+
+    void signalUpdateShareExchangeRecord(const QList<ShareExchangeData>& list);
+    void signalUpdateShareExchangeRecordSucceed();
+    void signalSendShareExchangeRecord(int cur_page, int total_page, const QList<ShareExchangeData>& list);
+    void signalQueryShareExchangeRecord(int cur_page, const QString& code, const QString& start_date,  const QString& end_date);
+    void signalDeleteShareExchangeRecord(const QString& code, const QString& start_date,  const QString& end_date);
+    void signalDeleteShareExchangeRecordSucceed();
+    void signalUpdateShareHsgtCounter(const ShareHsgtList& list);
+
+    void signalSendForeignDataList(const QList<ShareForeignVolCounter>&, const QString& );
 
 public slots:
     void slotSearchCodesOfText(const QString &text);
@@ -140,9 +155,10 @@ public slots:
     void slotSaveFavCode(const QString& code, bool fav);
     void slotInitDBTables();
     void slotUpdateShareCloseDate(const QList<QDate>& list);
+    void slotUpdateShareHsgtCounter(const ShareHsgtList&list);
     //历史数据
     void slotRecvShareHistoryInfos(const ShareDataList& list, int mode);
-    void slotSendShareHistoryUpdateDate(const ShareWorkingDate& date, bool update);
+    void slotSendShareHistoryUpdateDate(const QDate& date, bool update);
     void slotQueryShareHistoryUpdateDateList();
 //    void slotSendShareHistoryCloseInfo(const ShareDataList& list);
 //    void slotSendShareHistoryForeignVolInfo(const ShareDataList &list);
@@ -152,19 +168,9 @@ public slots:
     //void slotUpdateShareHistoryInfos(const QMap<QString, ShareDataList> map);
     bool slotAddHistoryData(const ShareData& data);
     void initBlockData(int type = 0);
-    void initShareData();
+    void initShareData(bool send);
 //    void slotQueryShareHistoryLastDate(const QString& code);
-    void slotUpdateShareinfoWithHistory(const QString& code,\
-                                        double lastMoney,\
-                                        double last3Change,\
-                                        double last5Change,\
-                                        double last10Change,\
-                                        double lastMonthChange,\
-                                        double lastYearChange,\
-                                        qint64 vol,\
-                                        qint64 vol_chnage,\
-                                        const ShareDataList& list);
-    void slotUpdateShareCounter(const ShareHistoryCounter& counter);
+    void slotUpdateShareCounter(const QList<ShareHistoryCounter>& counter);
     void slotUpdateHistoryChange(const QString& code);
     void slotUpdateStkProfitList(const ShareDataList& list);
     void slotAddShareAmoutByForeigner(const ShareDataList& list);
@@ -173,10 +179,19 @@ public slots:
     void slotUpdateShareBonusInfo(const ShareBonusList& list);
     void slotUpdateHsgtTop10Info(const ShareHsgtList& list);
     void slotUpdateShareFinanceInfo(const FinancialDataList& list);
+    void slotUpdateHsgtTop10Keys(const QDate& date);
+    void slotQueryLatestHsgtData();
     //查询
-    void slotQueryShareHsgtTop10List(const QString& code, const ShareWorkingDate& date);
+    void slotQueryShareHsgtTop10List(const QString& code, const QDate& date);
     void slotQueryShareFinanceList(const QStringList& list = QStringList());
-    void slotQueryShareFHSP(const QString& code, const ShareWorkingDate& date);
+    void slotQueryShareFHSP(const QString& code, const QDate& date);
+
+    //
+    void slotUpdateShareExchangeRecord(const QList<ShareExchangeData>& list);
+    void slotQueryShareExchangeRecord(int cur_page, const QString& code, const QString& start_date,  const QString& end_date);
+    void slotDeleteShareExchangeRecord(const QString& code, const QString& start_date,  const QString& end_date);
+    //
+    void slotRecvForeignCounterList(const QList<ShareForeignVolCounter>& list, const QString& date );
 
 private:
     void initSignalSlot();
@@ -207,7 +222,7 @@ private:    //本类使用的变量
     static CGarbo s_Garbo; // 定义一个静态成员，在程序结束时，系统会调用它的析构函数
     QThread             m_threadWork;       //工作线程
     QStringList                 mNotExchangeDaysList;
-    ShareDataMap                mRealShareMap;
+    ShareDataMap                mRealShareData;
     QDate                       mLast3DaysDate;
     QDate                       mLast5DaysDate;
     QDate                       mLast10DaysDate;
@@ -223,6 +238,9 @@ private:    //本类使用的变量
     QStringList                 mClosedDateList;
     int                         mHistoryInfoCount;
     //QList<QDate>                mShareCloseDateList;
+    QStringList                 mHsgtTop10Kyes;
+    QDate                       mHsgtDate;
+    int                         mSystemStatus;
 };
 
 #endif // DBSERVICE_H

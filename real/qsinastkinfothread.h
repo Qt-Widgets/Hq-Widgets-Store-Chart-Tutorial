@@ -2,33 +2,29 @@
 #define QSINASTKINFOTHREAD_H
 
 #include <QThread>
-#include <QList>
-#include <QMap>
-#include "utils/comdatadefines.h"
-//#include <QStringList>
-#include <QTimer>
-#include "utils/qhttpget.h"
 #include "data_structure/sharedata.h"
 
-class QSinaStkInfoThread : public QObject
+class QSinaStkInfoThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit QSinaStkInfoThread(QObject *parent = 0);
+    explicit QSinaStkInfoThread(const QStringList&  list, bool send, QObject *parent = 0);
     ~QSinaStkInfoThread();
     int  getStkCount();
+    void    cancel() {mCancel = true;}
+
+protected:
+    void run();
 signals:
     void    sendStkDataList(const ShareDataList& list);
-    void    signalSetStkList(const QStringList& list);
-public slots:
+public:
     void    setStkList(const QStringList& list);
-    void    slotRecvHttpContent(const QByteArray& bytes);
-    void    slotUpdateInfo();
-    void    slotRecvError(QNetworkReply::NetworkError);
 private:
-    QStringList mStkList;
-    QThread     mWorkThread;
-    QHttpGet    *mHttp;
+    void    slotRecvHttpContent(const QByteArray& bytes);
+private:
+    QList<QStringList> mStkList;            //将数据分割
+    bool        mSendResFlag;
+    bool        mCancel;
 };
 
 #endif // QSINASTKINFOTHREAD_H

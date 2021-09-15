@@ -21,6 +21,8 @@
 #include "real/qnorthflowinfodisplaywidget.h"
 #include "table/qshareforeignvoltablewidget.h"
 #include <QMessageBox>
+#include "qsahreoptwidget.h"
+#include <QHeaderView>
 
 #define     STK_ZXG_SEC         "0520"
 #define     STK_HSJJ_SEC        "4521"
@@ -46,25 +48,23 @@ public:
 };
 
 Dialog::Dialog(QWidget *parent) :
-    QDialog(parent),mTaskMgr(0),mIndexWidget(0),
-    ui(new Ui::MainDialog),systemIcon(0)
+    QDialog(parent),mTaskMgr(0),mIndexWidget(0),mIsMini(false),
+    ui(new Ui::MainDialog),systemIcon(0),mCtrlListWidget(0)
 {
     qDebug()<<__func__<<__LINE__;
     ui->setupUi(this);
-    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
+    ui->searchTxt->setMaximumWidth(this->fontMetrics().width(ui->searchTxt->placeholderText()) + 10);
+    ui->HqCenterButton->setMaximumWidth(this->fontMetrics().width(ui->HqCenterButton->text()) + 10);
+    ui->DataMgrBtn->setMaximumWidth(this->fontMetrics().width(ui->DataMgrBtn->text()) + 10);
+//    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
     this->setAttribute(Qt::WA_DeleteOnClose);
     while(ui->mainStackWidget->count())
     {
         ui->mainStackWidget->removeWidget(ui->mainStackWidget->widget(0));
     }
     qDebug()<<__func__<<__LINE__;
-    mHqWidget = new QWidget(this);
-    mHqWidget->setLayout(new QHBoxLayout);
-    mHqWidget->layout()->setSpacing(1);
-    mHqWidget->layout()->setMargin(0);
-    ui->mainStackWidget->addWidget(mHqWidget);
     mShareTableWidget = new QShareTablewidget(this);
-    mHqWidget->layout()->addWidget(mShareTableWidget);
+    ui->mainStackWidget->addWidget(mShareTableWidget);
     mDataMgrWidget = new QDataMgrWidget(this);
     ui->mainStackWidget->addWidget(mDataMgrWidget);
     mBlockTableWidget = new QBlockTableWidget(this);
@@ -89,7 +89,7 @@ Dialog::Dialog(QWidget *parent) :
     this->setWindowFlags(Qt::FramelessWindowHint);
 #ifdef Q_OS_WIN
     ui->tool_frame->setVisible(true);
-//    ui->min->setVisible(false);
+    ui->min->setVisible(false);
     ui->max->setVisible(false);
 #else
     ui->tool_frame->setVisible(false);
@@ -105,7 +105,6 @@ Dialog::Dialog(QWidget *parent) :
     this->setWindowIcon(appIcon);
     systemIcon = new QSystemTrayIcon(this);
     systemIcon->setIcon(appIcon);
-    systemIcon->hide();
     connect(systemIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(setDlgShow(QSystemTrayIcon::ActivationReason)));
 //    //创建快捷事件
 //    QShortcut *shotcut = new QShortcut(QKeySequence("Alt+X"), this);  //隐藏
@@ -118,6 +117,7 @@ Dialog::Dialog(QWidget *parent) :
 //    connect(shotcut3, SIGNAL(activated()), this, SLOT(slotDisplayShareMini()));
     //    setHook(this);
 #endif
+#if 0
     //
     mTaskMgr = new HQTaskMagrCenter;
     connect(mShareTableWidget, SIGNAL(signalSetFavCode(QString)), mTaskMgr, SIGNAL(signalSetFavCode(QString)));
@@ -136,11 +136,23 @@ Dialog::Dialog(QWidget *parent) :
     connect(mBlockTableWidget, SIGNAL(signalSetBlockType(int)), mTaskMgr, SLOT(setCurBlockType(int)));
     connect(mTaskMgr, SIGNAL(signalUpdateHistoryMsg(QString)), this, SLOT(slotUpdateMsg(QString)));
     connect(mTaskMgr, SIGNAL(signalSendNotrhBoundDataList(ShareHsgtList)), mIndexWidget, SLOT(updateData(ShareHsgtList)));
+    connect(mShareTableWidget, SIGNAL(signalDoubleClickCode(QString)),
+            this, SLOT(slotDoubClickedCode(QString)));
     //
     if(mForeignVolTableWidget)connect(mTaskMgr, SIGNAL(signalWorkingDayfinished()), mForeignVolTableWidget, SLOT(slotStartInit()));
     mTaskMgr->signalStart();
+#endif
 
     ui->mainStackWidget->setCurrentIndex(0);
+}
+
+void Dialog::slotDoubClickedCode(const QString &code)
+{
+    QSahreOptWidget* widget = new QSahreOptWidget(code, this);
+    QPoint pos = QCursor::pos();
+    QPoint target = this->mapFromGlobal(pos);
+    widget->move(target.x() - widget->width() / 2, target.y());
+    widget->show();
 }
 
 
@@ -161,8 +173,9 @@ void Dialog::setDlgShow(QSystemTrayIcon::ActivationReason val)
     switch (val) {
     case QSystemTrayIcon::DoubleClick:
     {
-        if(mIsMini) showMax();
-        else showMini();
+//        if(mIsMini) showMax();
+//        else showMini();
+        setVisible(!isVisible());
     }
         break;
     case QSystemTrayIcon::Context:
@@ -263,7 +276,7 @@ void Dialog::resizeEvent(QResizeEvent *event)
 
 void Dialog::updateHqTable(const ShareDataList& pDataList)
 {
-    mShareTableWidget->setDataList(pDataList);
+//    mShareTableWidget->setDataList(1, 1, pDataList);
 }
 
 void Dialog::updateBlockTable(const BlockDataList& pDataList)
@@ -337,19 +350,19 @@ void Dialog::slotDisplayShareFull()
 
 void Dialog::slotDisplayShareMini()
 {
-    if(mDisplayMode != E_DISPLAY_Share_MINI)
-    {
-        mDisplayMode = E_DISPLAY_Share_MINI;
-    }
-    mBlockTableWidget->setVisible(false);
-    mShareTableWidget->setVisible(true);
-    mDisplayCol = 0;
-    for(int i=0; i<mShareTableWidget->columnCount(); i++)
-    {
-        if(!mShareTableWidget->isColumnHidden(i)) mDisplayCol++;
-    }
-    mTargetSize.setWidth(mDisplayCol * mSecSize);
-    setTargetSize(mTargetSize);
+//    if(mDisplayMode != E_DISPLAY_Share_MINI)
+//    {
+//        mDisplayMode = E_DISPLAY_Share_MINI;
+//    }
+//    mBlockTableWidget->setVisible(false);
+//    mShareTableWidget->setVisible(true);
+//    mDisplayCol = 0;
+//    for(int i=0; i<mShareTableWidget->columnCount(); i++)
+//    {
+//        if(!mShareTableWidget->isColumnHidden(i)) mDisplayCol++;
+//    }
+//    mTargetSize.setWidth(mDisplayCol * mSecSize);
+//    setTargetSize(mTargetSize);
 }
 
 void Dialog::setTargetSize(const QSize &size)
@@ -380,6 +393,7 @@ void Dialog::keyPressEvent(QKeyEvent *event)
 {
     if(event->key() == Qt::Key_Backspace)
     {
+        qDebug()<<"backspace!!!:";
         static int backspace_num = 0;
         backspace_num++;
         if(backspace_num == 2)
@@ -395,6 +409,7 @@ void Dialog::keyPressEvent(QKeyEvent *event)
         box->show();
         event->ignore();
     }
+    event->ignore();
 }
 
 
@@ -425,28 +440,45 @@ void Dialog::slotTodayHSGUpdated()
 void Dialog::slotUpdateHSGTOfCode(const QString &code)
 {
     qDebug()<<"history code:"<<code;
-    QShareHistoryDialog *dlg = new QShareHistoryDialog(code) ;
-    dlg->setModal(false);
-    dlg->show();
+    bool found = false;
+    for(int i=0; i<ui->mainStackWidget->count(); i++)
+    {
+        QShareHistoryDialog* w = qobject_cast<QShareHistoryDialog*>(ui->mainStackWidget->widget(i));
+        if(w)
+        {
+            ui->mainStackWidget->setCurrentWidget(w);
+            found = true;
+            break;
+        }
+    }
+    if(!found)
+    {
+        QShareHistoryDialog *dlg = new QShareHistoryDialog(code) ;
+        dlg->setModal(false);
+        dlg->show();
+    }
+
 }
 
 void Dialog::on_dataMgrBtn_clicked()
 {
-    QAndroidListWidget *list = new QAndroidListWidget(this);
-    list->addItem(QStringLiteral("陆股通"), DATA_MUTUAL_MARKET);
-    list->addItem(QStringLiteral("龙虎榜"), DATA_LHB);
-    list->addItem(QStringLiteral("北向实时"), DATA_NORTH_REAL);
-    list->addItem(QStringLiteral("外资持股数据管理"), DATA_FOREIGN_CHECK);
-    connect(list, SIGNAL(signalItemClicked(int)), this, SLOT(slotDisplayDataPage(int)));
+    if(mCtrlListWidget) delete mCtrlListWidget;
+    mCtrlListWidget = new QAndroidListWidget(0, 0, this);
+    mCtrlListWidget->addItem(QStringLiteral("陆股通"), DATA_MUTUAL_MARKET);
+//    mCtrlListWidget->addItem(QStringLiteral("龙虎榜"), DATA_LHB);
+    mCtrlListWidget->addItem(QStringLiteral("北向实时"), DATA_NORTH_REAL);
+//    mCtrlListWidget->addItem(QStringLiteral("外资持股数据管理"), DATA_FOREIGN_CHECK);
+    connect(mCtrlListWidget, SIGNAL(signalItemClicked(int)), this, SLOT(slotDisplayDataPage(int)));
     QPoint tp = ((QWidget*)ui->DataMgrBtn->parent())->mapToGlobal(ui->DataMgrBtn->geometry().topLeft());
-    list->move(0, tp.y() - list->size().height());
-    list->show();
+    mCtrlListWidget->move(0, tp.y() - mCtrlListWidget->size().height());
+    mCtrlListWidget->show();
 }
 
 void Dialog::slotDisplayDataPage(int val)
 {
     QAndroidListWidget* widget = qobject_cast<QAndroidListWidget*>(sender());
-    if(!widget) return;
+    if(!widget || widget != mCtrlListWidget) return;
+
     if(val == DATA_MUTUAL_MARKET)
     {
         ui->mainStackWidget->setCurrentWidget(mDataMgrWidget);
@@ -475,44 +507,45 @@ void Dialog::slotDisplayDataPage(int val)
             }
         }
     }
-    widget->hide();
-    widget->deleteLater();
+    mCtrlListWidget->hide();
+    delete mCtrlListWidget;
+    mCtrlListWidget = 0;
 
 }
 
 void Dialog::slotDisplayHqCenterPage(int val)
 {
     QAndroidListWidget* widget = qobject_cast<QAndroidListWidget*>(sender());
-    if(!widget) return;
-    mShareTableWidget->resetDisplayRows();
-    mTaskMgr->setMktType(val);
-    widget->hide();
-    widget->deleteLater();
-
+    if(!widget || widget != mCtrlListWidget) return;
+//    mShareTableWidget->resetDisplayRows();
+    mCtrlListWidget->hide();
+    delete mCtrlListWidget;
+    mCtrlListWidget = 0;
 }
 
 void Dialog::slotHqCenterBtnClicked()
 {
-    if(ui->mainStackWidget->currentWidget() == mHqWidget)
+    if(ui->mainStackWidget->currentWidget() == mShareTableWidget)
     {
-        QAndroidListWidget *list = new QAndroidListWidget(this);
-        list->addItem(QStringLiteral("自选"), MKT_ZXG);
-        list->addItem(QStringLiteral("沪深"), MKT_ALL);
-        list->addItem(QStringLiteral("沪市"), MKT_SH);
-        list->addItem(QStringLiteral("深市"), MKT_SZ);
-        list->addItem(QStringLiteral("中小板"), MKT_ZXB);
-        list->addItem(QStringLiteral("创业板"), MKT_CYB);
-        list->addItem(QStringLiteral("科创板"), MKT_KCB);
-        list->addItem(QStringLiteral("ETF"), MKT_JJ);
-        list->addItem(QStringLiteral("陆股通TOP10"), MKT_LGT_TOP10);
-        connect(list, SIGNAL(signalItemClicked(int)), this, SLOT(slotDisplayHqCenterPage(int)));
+        if(mCtrlListWidget) delete mCtrlListWidget;
+        mCtrlListWidget = new QAndroidListWidget(0 , 0 , this);
+        mCtrlListWidget->addItem(QStringLiteral("自选"), MKT_ZXG);
+        mCtrlListWidget->addItem(QStringLiteral("沪深"), MKT_ALL);
+        mCtrlListWidget->addItem(QStringLiteral("沪市"), MKT_SH);
+        mCtrlListWidget->addItem(QStringLiteral("深市"), MKT_SZ);
+        mCtrlListWidget->addItem(QStringLiteral("中小板"), MKT_ZXB);
+        mCtrlListWidget->addItem(QStringLiteral("创业板"), MKT_CYB);
+        mCtrlListWidget->addItem(QStringLiteral("科创板"), MKT_KCB);
+        mCtrlListWidget->addItem(QStringLiteral("ETF"), MKT_JJ);
+        mCtrlListWidget->addItem(QStringLiteral("陆股通TOP10"), MKT_LGT_TOP10);
+        connect(mCtrlListWidget, SIGNAL(signalItemClicked(int)), this, SLOT(slotDisplayHqCenterPage(int)));
         QPoint tp = ((QWidget*)ui->HqCenterButton->parent())->mapToGlobal(ui->DataMgrBtn->geometry().topLeft());
-        list->move(0, tp.y() - list->size().height());
-        list->show();
+        mCtrlListWidget->move(0, tp.y() - mCtrlListWidget->size().height());
+        mCtrlListWidget->show();
     } else
     {
         //默认显示自选
-        ui->mainStackWidget->setCurrentWidget(mHqWidget);
+        ui->mainStackWidget->setCurrentWidget(mShareTableWidget);
         slotDisplayHqCenterPage(MKT_ZXG);
     }
 
@@ -521,14 +554,17 @@ void Dialog::slotHqCenterBtnClicked()
 void Dialog::on_min_clicked()
 {
     showMini();
+    ui->max->setVisible(true);
+    ui->min->setVisible(false);
 //    hide();
 //    if(systemIcon) systemIcon->setVisible(true);
 }
 
 void Dialog::on_max_clicked()
 {
-    if(isMaximized()) showNormal();
-    else showMaximized();
+    showMax();
+    ui->max->setVisible(false);
+    ui->min->setVisible(true);
 }
 
 void Dialog::on_close_clicked()
@@ -543,13 +579,13 @@ void Dialog::showMini()
     this->setFixedSize(200, size.height());
     this->move(size.width() - 200, 1);
     mIsMini = true;
-    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
+//    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
 }
 
 void Dialog::showMax()
 {
     this->setFixedSize(QApplication::desktop()->availableGeometry().size());
-    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
+//    this->setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
     this->show();
     this->move(0, 0);
     mIsMini = false;

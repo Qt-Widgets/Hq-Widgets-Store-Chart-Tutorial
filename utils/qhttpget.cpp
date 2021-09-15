@@ -4,9 +4,7 @@
 #include <QEventLoop>
 #include <QNetworkCookie>
 #include <QNetworkCookieJar>
-#include "data_structure/hqutils.h"
-#include "dbservices/dbservices.h"
-#include "dbservices/qactivedate.h"
+#include <QTextCodec>
 
 QHttpGet::QHttpGet(const QString& url, bool sequential, QObject *parent) :
     QThread(parent),mMgr(0), mUrl(url), mReply(0), mIsSequential(sequential), mUpdateTimer(0)
@@ -30,21 +28,7 @@ QHttpGet::~QHttpGet()
     if(mMgr) delete mMgr;
 
 }
-#if 0
-void QHttpGet::startGet()
-{
-    if(mIsSequential)
-    {
-        mUpdateTimer = new QTimer;
-        mUpdateTimer->setInterval(mInertVal * 1000);
-        connect(mUpdateTimer, SIGNAL(timeout()), this, SLOT(slotUpdateHttp()));
-        mUpdateTimer->start();
-    } else
-    {
-        slotUpdateHttp();
-    }
-}
-#endif
+
 
 void QHttpGet::setUpdateInterval(int secs)
 {
@@ -55,17 +39,6 @@ void QHttpGet::setUpdateInterval(int secs)
     }
 }
 
-//void QHttpGet::slotUpdateHttp()
-//{
-//    if(mUrl.length() == 0) return;
-//    mReply = mMgr->get(QNetworkRequest(mUrl));
-//    QEventLoop mainLoop;
-//    connect(mReply, SIGNAL(finished())
-////    qDebug()<<__FUNCTION__<<QThread::currentThread();
-////    connect(mReply, SIGNAL(finished()), this, SLOT(slotReadHttpContent()));
-//////    connect(mReply, SIGNAL(readyRead()), this, SLOT(slotStartReadHttpContent()));
-////    connect(mReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SIGNAL(signalErrorOccured(QNetworkReply::NetworkError)));
-//}
 
 void QHttpGet::run()
 {
@@ -104,7 +77,7 @@ void QHttpGet::run()
             }
         }
         QThread::sleep(mInertVal);
-        active = QActiveDateTime::isCurDateTimeActive();
+//        active = QActiveDateTime::isCurDateTimeActive();
         if(recv.size() >=0)
         {
             emit signalSendHttpConent(recv);
@@ -135,13 +108,11 @@ QByteArray QHttpGet::getContentOfURL(const QString &url, const QList<QNetworkCoo
 {
     QByteArray recv;
     QNetworkAccessManager mgr;
-    NetworkCookie cookie;
-    if(list.size() > 0)
-    {
-        cookie.setCookies(list);
-        mgr.setCookieJar(&cookie);
+    QNetworkRequest request(url);
+    foreach (QNetworkCookie cookie, list) {
+        request.setRawHeader(cookie.name(), cookie.value());
     }
-    QNetworkReply *reply = mgr.get(QNetworkRequest(url));
+    QNetworkReply *reply = mgr.get(request);
 //    qDebug()<<reply;
     if(!reply) return recv;
 
@@ -160,13 +131,28 @@ QByteArray QHttpGet::getContentOfURL(const QString &url, const QList<QNetworkCoo
     }
 
 //    qDebug()<<reply->isFinished()<<reply->errorString();
-    if(reply->error() == QNetworkReply::NoError && reply->isFinished())
+    if(reply->error() == QNetworkReply::NoError)
     {
-        recv = reply->readAll();
-    }
-
-    reply->abort();
-    reply->close();
+        if(reply->isFinished())
+        {
+            QString content_type = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+            int index = content_type.indexOf("charset=");
+            QTextCodec *htmlCodes = 0;
+            if(index >= 0)
+            {
+                int last_index = content_type.indexOf(QRegExp("[;\"]"), index);
+                QString name = content_type.mid(index+8);
+                htmlCodes = QTextCodec::codecForName(name.toLatin1());
+            }
+            recv = reply->readAll();
+            if(htmlCodes && htmlCodes->name() != QTextCodec::codecForLocale()->name())
+            {
+                recv = QTextCodec::codecForLocale()->fromUnicode(htmlCodes->toUnicode(recv));
+            }
+        }
+        reply->abort();
+        reply->close();
+    }    
     delete reply;
     reply = 0;
     return recv;

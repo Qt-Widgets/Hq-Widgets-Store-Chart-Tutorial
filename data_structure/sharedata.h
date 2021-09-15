@@ -13,63 +13,79 @@
 
 #define         SH_FUND_REG         "(sh){0,1}5[0-9]{5}"
 #define         SH_INDEX_REG        "sh0[0-9]{5}"
+#define         SH_ZB_SHARE_REG        "(sh){0,1}60[0-9]{4}"
+#define         SH_KCB_SHARE_REG    "(sh){0,1}68[0-9]{4}"
+#define         SH_KZZ_REG          "(sh){0,1}11[0-9]{4}"
+
 #define         SZ_FUND_REG         "(sz){0,1}1[0-9]{5}"
 #define         SZ_INDEX_REG        "sz399[0-9]{3}"
-#define         SH_SHARE_REG        "(sh){0,1}6[0-9]{5}"
-#define         SZZB_SHARE_REG        "(sz){0,1}(00[01]{1}[0-9]{3})"
-#define         SZZXB_SHARE_REG        "(sz){0,1}(002[0-9]{3})"
-#define         SZCYB_SHARE_REG        "(sz){0,1}(30[0-9]{4})"
+#define         SZ_ZB_SHARE_REG        "(sz){0,1}(00[01]{1}[0-9]{3})"
+#define         SZ_ZXB_SHARE_REG        "(sz){0,1}(00[23]{1}[0-9]{3})"
+#define         SZ_CYB_SHARE_REG        "(sz){0,1}(3[0-9]{5})"
+#define         SZ_KZZ_REG          "(sz){0,1}12[0-9]{4}"
+
 #define         HK_SHARE_REG        "(hk){0,1}\\d{5}"
+
+
 
 typedef    enum     share_data_type
 {
     SHARE_UNDEF = 0x0000,
-    SHARE_INDEX_SH = 0x0001,
-    SHARE_INDEX_SZ = 0x0002,
-    SHARE_INDEX_HK = 0x0004,
-    SHARE_INDEX_US = 0x0008,
+    SHARE_INDEX_SH = 1,
+    SHARE_INDEX_SZ = 1<<1,
+    SHARE_INDEX_HK = 1<<2,
+    SHARE_INDEX_US = 1<<3,
     SHARE_INDEX = SHARE_INDEX_SH | SHARE_INDEX_SZ | SHARE_INDEX_HK | SHARE_INDEX_US,
-    SHARE_SH_ZB = 0x0010,
-    SHARE_SH_FUND = 0x0020,
-    SHARE_SH = SHARE_SH_ZB | SHARE_SH_FUND,
-    SHARE_SZ_ZB = 0x0100,
-    SHARE_SZ_ZXB = 0x0200,
-    SHARE_SZ_CYB = 0x0400,
-    SHARE_SZ_FUND = 0x0800,
-    SHARE_SZ = SHARE_SZ_ZB | SHARE_SZ_FUND |SHARE_SZ_ZXB | SHARE_SZ_CYB,
+
+    SHARE_SH_ZB = 1<<4,
+    SHARE_SH_KCB = 1<<5,
+    SHARE_SH = SHARE_SH_ZB | SHARE_SH_KCB,
+
+    SHARE_SZ_ZB = 1<<7,
+    SHARE_SZ_ZXB = 1<<8,
+    SHARE_SZ_CYB = 1<<9,
+    SHARE_SZ = SHARE_SZ_ZB  |SHARE_SZ_ZXB | SHARE_SZ_CYB,
+
+    SHARE_SH_FUND = 1<<6,
+    SHARE_SZ_FUND = 1<<10,
     SHARE_FUND = SHARE_SH_FUND | SHARE_SZ_FUND,
-    SHARE_US = 0x1000,
-    SHARE_HK = 0x2000,
+
+    SHARE_US = 1<<11,
+    SHARE_HK = 1<<12,
+    SHARE_SH_KZZ = 1<<13,
+    SHARE_SZ_KZZ = 1<<14,
+    SHARE_KZZ = SHARE_SH_KZZ | SHARE_SZ_KZZ,
+    SHARE_SH_TOTAL = SHARE_SH | SHARE_SH_FUND | SHARE_SH_KZZ,
+    SHARE_SZ_TOTAL = SHARE_SZ | SHARE_SZ_FUND | SHARE_SZ_KZZ,
+    SHARE_SHARE_ONLY = SHARE_SH | SHARE_SZ,
 }SHARE_DATA_TYPE;
 
-struct HistoryInfo{
-    double                  mLastMoney;
-    qint64                  mLastVol;
-    double                  mLastChgPer;
-    double                  mLast3DaysChgPers;
-    double                  mLast5DaysChgPers;
-    double                  mLast10DaysChgPers;
-    //double                  mLastMonthChgPers;
-    double                  mChgPersFromYear;
-    double                  mChgPersFromWeek;
-    double                  mChgPersFromMonth;
-    double                  mChgPersFromYear_BAK;
-    double                  mChgPersFromWeek_BAK;
-    double                  mChgPersFromMonth_BAK;
-    double                  mLastClose;
+//struct ShareDailyInfo{
+//    qint64              time;                       //时间
+//    double             money;                      //成交额
+//    double             vol;                        //成交量
+//    double             lgt_money;                  //陆股通成交额
+//    double             lgt_pure;                   //陆股通净买入额
+//    double             lgt_mutable_percent;         //陆股通比例
+//    double             lgt_vol;                     //陆股通持股数
+//    double             close;                      //收盘价
+//    double             subscription_price;          //复权价
+//    double             last_close;                  //上一日收盘价
+//    double             total_share_vol;             //总股本
+//    double              mutal_share_vol;            //流通股本
+//};
 
-    double                  mYearDayPrice;
-    double                  mMonthDayPrice;
-    double                  mWeekDayPrice;
-    HistoryInfo()
-    {
-        mChgPersFromYear_BAK = 1.0;
-        mChgPersFromWeek_BAK = 1.0;
-        mChgPersFromMonth_BAK = 1.0;
-        mYearDayPrice = 0.0;
-        mMonthDayPrice = 0.0;
-        mWeekDayPrice = 0.0;
-    }
+struct ShareCounterInfo{
+    double                  mLastMoney = 0.0;           //前成交金额
+    double                  mYearDayPrice = 0.0;        //复权的年初价格
+    double                  mMonthDayPrice = 0.0;       //复权的月初价格
+    double                  mWeekDayPrice = 0.0;        //复权的周初价格
+    double                  mYearChgPer = 0.0;          //复权的年涨幅
+    double                  mMonthChgPer = 0.0;         //复权的月涨幅
+    double                  mWeekChgPer = 0.0;          //复权的周涨幅
+    QDate                   mWeekDay;
+    QDate                   mMonthDay;
+    QDate                   mYearDay;
 };
 
 enum Share_Basic_Update_Mode{
@@ -82,38 +98,50 @@ enum Share_Basic_Update_Mode{
 
 };
 
+struct ShareRealData{
+    double                  mHsl = 0.0;           //换手率
+    double                  mMoneyRatio = 0.0;    //资金比率
+    double                  mZJLX = 0.0;          //资金流向
+    double                  mTotalCap = 0.0;      //总市值
+    double                  mMutalbleCap = 0.0;   //流通市值
+    double                  mLastClose = 0.0;     //前收盘价
+    double                  mChg = 0.0;           //涨跌
+    double                  mChgPercent = 0.0;    //涨跌幅
+    double                  mHigh = 0.0;          //最高
+    double                  mLow = 0.0;           //最低
+    double                  mOpen = 0.0;          //开盘
+    double                  mClose = 0.0;         //收盘价
+    double                  mMoney = 0.0;         //成交金额
+    qint64                  mVol = 0.0;           //成交量
+    ShareTradeDateTime      mTime = 0.0;          //更新时间
+};
+
+struct ShareForeignHolder{
+    double                  mVol = 0.0;             //外资持股量
+    double                  mPercent = 0.0;         //外资持股占流通百分比
+    double                  mCap = 0.0;             //外资持股市值
+    double                  mJMR1 = 0.0;            //1日净买入额
+    double                  mJMR5 = 0.0;            //5日净买入额
+    double                  mJMR10 = 0.0;           //10日净买入额
+    double                  mJMRM = 0.0;            //月净买入额
+    double                  mJMRY = 0.0;            //年净买入额
+    double                  mMoney = 0.0;           //当日外资成交金额
+    bool                    mIsTop10 = false;       //当日是否外资成交榜
+
+};
+
 struct ShareData : public HqBaseData
 {
 public:
-    //基本信息
-    SHARE_DATA_TYPE         mShareType;
-    HistoryInfo             mHistory;
+    //实时信息
+    ShareRealData           mRealInfo;
+    //统计信息
+    ShareCounterInfo        mCounterInfo;
+    //外资持股信息
+    ShareForeignHolder      mForeignInfo;
+    //交易盈亏统计
     double                  mProfit;
-    double                  mHsl;
-    double                  mMoneyRatio;
-    double                  mZJLX;      //资金流向
-    double                  mGXL;   //股息率
-    double                  mTotalCap;
-    double                  mMutalbleCap;
-    qint64                  mForeignVolChg;
-    double                  mForeignCap;
-    double                  mForeignCapChg;
-    double                  mCur;
-    double                  mLastClose;
-    double                  mChg;
-    double                  mChgPercent;
-    double                  mHigh;
-    double                  mLow;
-    double                  mOpen;
-    double                  mClose;
-    double                  mMoney;
-    double                  mRZRQ;
-    qint64                  mVol;
-    ShareWorkingDateTime           mTime;
-    QStringList             mBlockCodeList;
-    FinancialData           mFinanceData;
-    ShareBonus              mBonusData;
-    ShareHsgt               mHsgtData;
+
 public:
     ShareData();
     static int  stk_sort_type;
@@ -122,28 +150,30 @@ public:
 
     bool operator ==(const ShareData& data)
     {
-        return this->mCode == data.mCode && this->mTime == data.mTime && this->mShareType == data.mShareType;
+        return this->mCode == data.mCode && this->mListTime == data.mListTime && this->mType == data.mType;
     }
 
     bool appendBlock(const QString& code)
     {
-        if(!mBlockCodeList.contains(code)) return false;
-        mBlockCodeList.append(code);
+        if(!mReferCodeList.contains(code)) return false;
+        mReferCodeList.append(code);
         return true;
     }
 
     bool isContainsBlock(const QString& code)
     {
-        return mBlockCodeList.contains(code);
+        return mReferCodeList.contains(code);
     }
     QStringList getBlockCodesList() const
     {
-        return mBlockCodeList;
+        return mReferCodeList;
     }
+
 
     static QString shareTypeString(SHARE_DATA_TYPE type)
     {
         if(type == SHARE_SH_ZB) return QObject::tr("上证A股");
+        if(type == SHARE_SH_KCB) return QObject::tr("科创板");
         if(type == SHARE_SZ_ZB) return QObject::tr("深证主板");
         if(type == SHARE_SZ_ZXB) return QObject::tr("深证中小");
         if(type == SHARE_SZ_CYB) return QObject::tr("深证创业");
@@ -151,6 +181,8 @@ public:
         if(type == SHARE_INDEX_SZ) return QObject::tr("深圳指数");
         if(type == SHARE_SH_FUND) return QObject::tr("上证基金");
         if(type == SHARE_SZ_FUND) return QObject::tr("深圳基金");
+        if(type == SHARE_SZ_KZZ) return QObject::tr("深圳可转债");
+        if(type == SHARE_SH_KZZ) return QObject::tr("上海可转债");
         if(type == SHARE_HK) return QObject::tr("港股");
         return "-";
     }
@@ -158,20 +190,31 @@ public:
     //通过证券的代码来获取证券的类型(不包括指数,指数需要强制指定)
     static SHARE_DATA_TYPE shareType(const QString &src)
     {
-        QRegExp shShare(SH_SHARE_REG);
-        QRegExp szZBShare(SZZB_SHARE_REG);
-        QRegExp szZXBShare(SZZXB_SHARE_REG);
-        QRegExp szCYBShare(SZCYB_SHARE_REG);
+        QRegExp shZBShare(SH_ZB_SHARE_REG);
+        QRegExp shKCBShare(SH_KCB_SHARE_REG);
+        QRegExp shKZZShare(SH_KZZ_REG);
+
+        QRegExp szZBShare(SZ_ZB_SHARE_REG);
+        QRegExp szZXBShare(SZ_ZXB_SHARE_REG);
+        QRegExp szCYBShare(SZ_CYB_SHARE_REG);
+        QRegExp szKZZShare(SZ_KZZ_REG);
+
         QRegExp hkShare(HK_SHARE_REG);
+
         QRegExp shFund(SH_FUND_REG);
         QRegExp szFund(SZ_FUND_REG);
         QRegExp shIndex(SH_INDEX_REG);
         QRegExp szIndex(SZ_INDEX_REG);
 
-        if(shShare.exactMatch(src)) return SHARE_SH_ZB;
+        if(shZBShare.exactMatch(src)) return SHARE_SH_ZB;
+        if(shKCBShare.exactMatch(src)) return SHARE_SH_KCB;
+        if(shKZZShare.exactMatch(src)) return SHARE_SH_KZZ;
+
         if(szZBShare.exactMatch(src)) return SHARE_SZ_ZB;
         if(szZXBShare.exactMatch(src)) return SHARE_SZ_ZXB;
         if(szCYBShare.exactMatch(src)) return SHARE_SZ_CYB;
+        if(szKZZShare.exactMatch(src)) return SHARE_SZ_KZZ;
+
         if(shIndex.exactMatch(src)) return SHARE_INDEX_SH;
         if(szIndex.exactMatch(src)) return SHARE_INDEX_SZ;
         if(shFund.exactMatch(src)) return SHARE_SH_FUND;
@@ -183,8 +226,8 @@ public:
     static QString prefixCode(const QString&  code)
     {
         SHARE_DATA_TYPE type = shareType(code);
-        if(type & SHARE_SH) return "sh";
-        if(type & SHARE_SZ) return "sz";
+        if((type & SHARE_SH) || (type & SHARE_SH_KZZ) || (type & SHARE_SH_FUND)) return "sh";
+        if((type & SHARE_SZ) || (type & SHARE_SZ_KZZ) || (type & SHARE_SZ_FUND)) return "sz";
         if(type & SHARE_HK) return "hk";
         if(type & SHARE_US) return "us";
         return "undefined";
@@ -208,7 +251,7 @@ public:
 
     QString keyOfCodeTime() const
     {
-        return QString("%1_%2").arg(mCode).arg(mTime.date().toString("yyyy-MM-dd"));
+        return QString("%1_%2").arg(mCode).arg(mRealInfo.mTime.date().toString("yyyy-MM-dd"));
     }
 
     bool    isUpdated(const ShareData& tar, int mode)
@@ -220,9 +263,9 @@ public:
             mPY = tar.mPY;
             change = true;
         }
-        if((Share_Basic_Update_Block & mode) && mBlockCodeList.join(",") != tar.mBlockCodeList.join(","))
+        if((Share_Basic_Update_Block & mode) && mReferCodeList.join(",") != tar.mReferCodeList.join(","))
         {
-            mBlockCodeList = tar.mBlockCodeList;
+            mReferCodeList = tar.mReferCodeList;
             change = true;
         }
         if((Share_Basic_Update_Fav & mode) && mIsFav != tar.mIsFav)
@@ -230,9 +273,9 @@ public:
             mIsFav = tar.mIsFav;
             change = true;
         }
-        if((Share_Basic_Update_Hsgt & mode) && mHsgtData.mIsTop10 != tar.mHsgtData.mIsTop10)
+        if((Share_Basic_Update_Hsgt & mode) && mForeignInfo.mIsTop10 != tar.mForeignInfo.mIsTop10)
         {
-            mHsgtData.mIsTop10 = tar.mHsgtData.mIsTop10;
+            mForeignInfo.mIsTop10 = tar.mForeignInfo.mIsTop10;
             change = true;
         }
 
@@ -247,40 +290,48 @@ public:
 
 };
 typedef         QList<ShareData>            ShareDataList;
-typedef         QMap<QString, ShareData>    ShareDataMap;
+typedef         QMap<QString, ShareData>    ShareDataMap;   //key市场代码(sh/sz) + code  sh600036
 Q_DECLARE_METATYPE(ShareData)
 Q_DECLARE_METATYPE(ShareDataList)
 Q_DECLARE_METATYPE(ShareDataMap)
 
-typedef struct hqShareHistoryFileData{
+typedef struct hqShareDailyData{
     unsigned int    mDate;
+    double          mOpen;
+    double          mHigh;
+    double          mLow;
     double          mClose;                 //最新
     double          mLastClose;             //昨日最后价格
-    double          mCloseAdjust;           //复权
-    double          mMoney;
-    qint64          mForeignVolOri;
-    qint64          mForeignVolAdjust;      //送转股的情况对外资持股的调整
+    double          mCloseAdjust;           //复权  计算涨跌幅使用
+    double          mMoney;                 //总成交金额
+    double          mVol;                   //总成交量
+    double          mZGB;
+    double          mLTGB;
+    double          mForeignVol;
     double          mForeignMututablePercent;
-    qint64          mTotalShareCount;
 
-    hqShareHistoryFileData()
+    hqShareDailyData()
     {
         mDate = 0;
         mClose = 0.0;
         mLastClose = 0.0;
         mCloseAdjust = 0.0;
         mMoney = 0.0;
-        mForeignVolOri = 0;
-        mForeignVolAdjust = 0;
+        mForeignVol = 0;
         mForeignMututablePercent = 0.0;
-        mTotalShareCount = 0;
+        mZGB = 0.0;
+        mLTGB = 0.0;
+        mOpen = 0.0;
+        mVol = 0.0;
+        mHigh = 0.0;
+        mLow = 0.0;
     }
-}ShareHistoryFileData;
+}ShareDailyData;
 
-typedef QList<ShareHistoryFileData>       ShareHistoryFileDataList;
+typedef QList<ShareDailyData>       ShareDailyDataList;
 
-Q_DECLARE_METATYPE(ShareHistoryFileData)
-Q_DECLARE_METATYPE(ShareHistoryFileDataList)
+Q_DECLARE_METATYPE(ShareDailyData)
+Q_DECLARE_METATYPE(ShareDailyDataList)
 
 typedef struct hqShareForeignVolFileData{
     unsigned int    mCode;
@@ -321,18 +372,7 @@ Q_DECLARE_METATYPE(ShareForignVolFileDataList)
 
 struct ShareHistoryCounter{
     QString     code;
-    QDate       weekDay;
-    QDate       monthDay;
-    QDate       yearDay;
-    double      weekP;
-    double      monthP;
-    double      yearP;
-    double      lastMoney;
-    qint64      foreign_vol;
-    double      foreign_percent;
-    double      foreign_ch1;
-    double      foreign_ch5;
-    double      foreign_ch10;
+    ShareCounterInfo  info;
 };
 
 struct  GRAPHIC_DATA{
@@ -360,12 +400,12 @@ public:
     {
         foreach (ShareData data, list) {
             GRAPHIC_DATA graph;
-            graph.mDate = data.mTime.date();
-            graph.mClose = data.mClose;
-            graph.mForVol = data.mHsgtData.mVolTotal;
-            graph.mMoney = data.mMoney;
-            graph.mRzye = data.mRZRQ;
-            graph.mZjlx = data.mZJLX;
+            graph.mDate = data.mRealInfo.mTime.date();
+            graph.mClose = data.mRealInfo.mClose;
+            graph.mForVol = data.mForeignInfo.mVol;
+            graph.mMoney = data.mRealInfo.mMoney;
+//            graph.mRzye = data.mRZRQ;
+            graph.mZjlx = data.mRealInfo.mZJLX;
             append(graph);
         }
         for(int i=1; i<size(); i++)
@@ -377,13 +417,13 @@ public:
         }
     }
 
-    inline GRAPHIC_DATA_LIST(const ShareHistoryFileDataList& list)
+    inline GRAPHIC_DATA_LIST(const ShareDailyDataList& list)
     {
-        foreach (ShareHistoryFileData data, list) {
+        foreach (ShareDailyData data, list) {
             GRAPHIC_DATA graph;
             graph.mDate = QDateTime::fromTime_t(data.mDate).date();
             graph.mClose = data.mClose;
-            graph.mForVol = data.mForeignVolAdjust;
+            graph.mForVol = data.mForeignVol;
             graph.mMoney = data.mMoney;
 //            graph.mRzye = data.mRZRQ;
 //            graph.mZjlx = data.mZJLX;
@@ -432,7 +472,56 @@ public:
     double      mMaxMoney;
 };
 
+enum   ShareExchangeType
+{
+    ShareExchange_None = 0,
+    ShareExchange_Buy = 1,
+    ShareExchange_Sell,
+    ShareExchange_Share_Bonus,
+    ShareExchange_Dividend_Bonus,
+};
 
+struct ShareExchangeData{
+    int         mID;
+    QString     mCode;
+    QString     mName;
+    QString     mDateTime;
+    int         mType;
+    int         mNum;
+    int         mTotalNum;
+    double      mPrice;
+    double      mMoney;
+    double      mYongjin;
+    double      mYinhuasui;
+    double      mOther;
+    double      mNetIncome;
+    QString     mSerialText;
+};
+
+struct ShareForeignVolChgCounter
+{
+    double      mShareHold_Change;
+    double      mShareSZ_Change;
+    double      mShareRate_Change;
+};
+
+struct ShareForeignVolCounter{
+    int             mCode;
+    qint64          mDate;
+    double          mPrice;                     //最新价
+    double          mChangePercent;             //涨跌幅
+    double          mShareHold;                 //持股数
+    double          mShareSZ;                   //持股市值
+    double          mLTZB;                      //流通占比
+    double          mZZB;                       //总占比
+    double          mLTSZ;                      //流通市值
+    double          mZSZ;                       //总市值
+    ShareForeignVolChgCounter  mChg1;
+    ShareForeignVolChgCounter  mChg3;
+    ShareForeignVolChgCounter  mChg5;
+    ShareForeignVolChgCounter  mChg10;
+    ShareForeignVolChgCounter  mChgM;
+};
 
 
 #if 0

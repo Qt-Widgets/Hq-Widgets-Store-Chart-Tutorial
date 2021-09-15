@@ -1,14 +1,19 @@
 ﻿#ifndef QSHARETABLEWIDGET_H
 #define QSHARETABLEWIDGET_H
 
-#include "HqTableWidget.h"
+#include "HqMergeTableWidget.h"
 #include "data_structure/sharedata.h"
+#include <QMutex>
 
-class QShareTablewidget : public HqTableWidget
+class QSinaStkResultMergeThread;
+
+class QShareTablewidget : public HqMergeTableWidget
 {
     Q_OBJECT
 public:
     explicit QShareTablewidget(QWidget *parent = 0);
+public slots:
+    void    setSelfShareCodesList(const QStringList& list);
 private:
     void    initMenu();
 
@@ -21,20 +26,21 @@ signals:
     void    signalSetFavCode(const QString& code);
     void    signalDisplayChinaTop10();
     void    signalSetSpecialConcern(const QString& code);
+    void    signalDoubleClickCode(const QString& code);
+    void    signalDisplayDetailOfCode(const QString& code);
 
 public slots:
-    void    setDataList(const ShareDataList& list);
-    void    slotCustomContextMenuRequested(const QPoint &pos);
-    void    setShareMarket();
-    void    setDisplayMinuteGraph();
-    void    setDisplayDayGraph();
-    void    setDisplayBlockDetail();
-    void    setDisplayHSHK();
+    void    updateTableInfo();
+    void    setShareMarketType(int type);
+    void    slotRecvAllShareDateList(const ShareDataList& list,qint64 time);
+    void    setSortType(int type);
     void    slotCellDoubleClicked(int row, int col);
-    void    setSpecialConcer();
 private:
     QMap<QString, double>   mShareMap;
     QList<QAction*>         mCodesActionList;
+    ShareDataList                       mShareDataList;
+    QMutex                              mDataMutex;
+    QList<struMenu>                     mMktTypeList;
 };
 
 #endif // QSHARETABLEWIDGET_H

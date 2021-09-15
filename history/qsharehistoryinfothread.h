@@ -11,24 +11,23 @@
 class QShareHistoryInfoThread : public QRunnable
 {
 public:
-    explicit QShareHistoryInfoThread(const QString& code, const ShareWorkingDate& start, const ShareWorkingDate& end, QObject* parent = 0);
-    explicit QShareHistoryInfoThread(const QString& code, QMap<QDate, ShareForignVolFileDataList>* map, QObject* parent = 0);
+    explicit QShareHistoryInfoThread(const QString& code, const QMap<QDate, ShareForignVolFileData>& list, bool counter = true, QObject* parent = 0);
     ~QShareHistoryInfoThread();
     QString getCode();
+    void    setConuter(bool sts) {mCounter = sts;}
 public:
     void run();
 private:
-    void                        adjustDataList(ShareHistoryFileDataList& list, double price, double ratio);
-    bool                        readFile(ShareHistoryFileDataList& list, bool& adjust);
+    void                        adjustDataList(ShareDailyDataList& list, double price, double ratio);
+    bool                        readFile(ShareDailyDataList& list, bool& adjust);
     QString                     getFileName();
-    void                        writeFile(const ShareHistoryFileDataList& list, const char* mode);
-    void                        getForeignVolData(qint64& vol, double& percent, const QDate& date);
+    QString                     getPath();
+    void                        writeFile(const ShareDailyDataList& list, const char* mode);
 private:
     QString         mCode;
     QObject         *mParent;
-    ShareWorkingDate       mStart;
-    ShareWorkingDate       mEnd;
-    QMap<QDate, ShareForignVolFileDataList> *mExistForeignMap;
+    bool            mCounter;
+    QMap<QDate, ShareForignVolFileData>      mForeignList;
 };
 
 #endif // QSHAREHISTORYINFOTHREAD_H

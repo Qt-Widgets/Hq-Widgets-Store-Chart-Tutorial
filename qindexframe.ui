@@ -6,32 +6,42 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>541</width>
-    <height>82</height>
+    <width>450</width>
+    <height>65</height>
    </rect>
   </property>
-  <property name="font">
-   <font>
-    <family>微软雅黑</family>
-    <pointsize>10</pointsize>
-    <weight>75</weight>
-    <bold>true</bold>
-   </font>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="styleSheet">
-   <string notr="true">QLabel{
+   <string notr="true">
+
+QLabel{
 	font-family:Microsoft Yahei;
 	font-weight:bold;
-	font-size:20pt;
-	color:red;
+	/*font-size:20pt;*/
 	alignment:center;
 }
 #name,#cur{
-	font-size:16pt;
-}</string>
+	/*font-size:16pt;*/
+}
+
+</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <property name="spacing">
+    <number>10</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
    <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
     <number>0</number>
    </property>
    <property name="bottomMargin">
@@ -39,8 +49,11 @@
    </property>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="spacing">
+      <number>2</number>
+     </property>
      <item>
-      <widget class="QLabel" name="name">
+      <widget class="ColorTextLabel" name="name">
        <property name="text">
         <string>上证指数</string>
        </property>
@@ -50,7 +63,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="cur">
+      <widget class="ColorTextLabel" name="cur">
        <property name="text">
         <string>3001.10</string>
        </property>
@@ -62,7 +75,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="chg">
+    <widget class="ColorTextLabel" name="chg">
      <property name="text">
       <string>+30.12</string>
      </property>
@@ -72,7 +85,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="chgper">
+    <widget class="ColorTextLabel" name="chgper">
      <property name="text">
       <string>+9.98%</string>
      </property>
@@ -82,7 +95,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="money">
+    <widget class="ColorTextLabel" name="money">
      <property name="text">
       <string>1012亿</string>
      </property>
@@ -93,6 +106,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ColorTextLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">colortextlabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

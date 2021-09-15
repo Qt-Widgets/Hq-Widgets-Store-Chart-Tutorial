@@ -61,24 +61,23 @@ void QEastMoneyBlockMangagerThread::reverseSortRule()
 
 void QEastMoneyBlockMangagerThread::slotRecvBlockDataList(const BlockDataList &list)
 {
+
     foreach (BlockData data, list) {
         if(mBlockDataList.contains(data)) continue;
         mBlockDataList.append(data);
     }
-
 }
 
 void QEastMoneyBlockMangagerThread::slotUpdateBlockInfo()
 {
-    BlockDataList wklist;
-    BlockDataList plist = DATA_SERVICE->getAllBlock();
+    BlockDataList wklist = DATA_SERVICE->getAllBlock();
 
-    foreach (BlockData data, plist) {
-        if(data.mBlockType & mCurBlockType)
-        {
-            wklist.append(data);
-        }
-    }
+//    foreach (BlockData data, plist) {
+//        if(data.mBlockType & mCurBlockType)
+//        {
+//            wklist.append(data);
+//        }
+//    }
     if(mBlockRule == BLOCK_DISPLAY_SORT_DESCEND)
     {
         qSort(wklist.begin(), wklist.end(), &BlockData::sortByChangeDesc);

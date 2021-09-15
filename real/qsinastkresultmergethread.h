@@ -10,7 +10,7 @@
 #include "qeastmoneyzjlxthread.h"
 #include "qsinastkinfothread.h"
 
-class ShareData;
+struct ShareData;
 
 
 class QSinaStkResultMergeThread : public QThread
@@ -27,48 +27,39 @@ public:
     void displayNext();
     void displayPrevious();
     void displayLast();
+
 signals:
 
-protected:
+protected slots:
     void run();
 
 public slots:
-    void        setStkList(const QStringList& list);
-    void        stopUpdate();
     void        setMktType(int type);
     void        setSortType(int type);
     void        setActive(bool active);
     void        setSelfCodesList(const QStringList& list );
     void        setDisplayPage(int val);
     void        setDisplayChinaTop10();
-private slots:
-    void        updateStkCodes(MKT_TYPE type);
-    void        updateStkInfoList(const QList<QStringList>& pStkSectionList);
-    //StockDataList   RealtimeInfo(const QStringList& codes);
-    void            SortResultList(ShareDataList& result, const ShareDataList& mid);
-    void         slotRevResList(const ShareDataList& mid);
+    void        setShareCodes(const QStringList& list);
 
 signals:
-    void    sendStkDataList(const ShareDataList& list);
+    void    sendStkDataList(const ShareDataList& list, qint64 time);
     void    sendStkinfoUpdateProgress(int cur, int total);
 private:
-    QStringList                                             mStkCodesList;
-    int                                                     mTotalPage;
-    int                                                     mCurPage;
-    int                                                     mPageSize;
-//    int                                                     mSortType;
-//    int                                                     mSortRule;
     MKT_TYPE                                                mMktType;
-    QList<QSinaStkInfoThread*>                              mThreadList;
     QList<QStringList>                                      mSecCodesList;
     QMutex                                                  mSecCodesLock;
-    QMap<QString, ShareData>                                mMidStkDataMapList;
     bool                                                    mActive;
     QMutex                                                  mListMutex;
     QStringList                                             mSelfCodesList;
     QMap<QString, double>                                   mZjlxMaplist;
     int                                                     mStkCntPerTrd;
-    bool                                                    mCodeChangeFlag;
+    bool                                                    mIsCodeChg;
+    QStringList                                             mAllShareCodesList;
+    QMutex                                                  mCodeMutex;
+    bool                                                    mParamChange;
+    QList<QSinaStkInfoThread*>                              mSubThreadList;
+//    ShareDataList                                           mResDataList;
 };
 
 #endif // QSINASTKRESULTMERGETHREAD_H

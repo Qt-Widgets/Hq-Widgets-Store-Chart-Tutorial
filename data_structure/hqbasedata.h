@@ -34,12 +34,16 @@ public:
     }
 
 public:
-    bool        mIsFav;
-    int         mType;
-    QString     mCode;
-    QString     mName;
-    QString     mPY; //拼音简称
-    bool        mStatus;    //是否停牌
+    bool                    mIsFav; //是否自选
+    int                     mType;  //类型
+    QString                 mCode;  //编码
+    QString                 mName;  //名称
+    QString                 mPY;    //拼音简称
+    bool                    mStatus;    //是否停牌
+    QString                 mListTime;  //上市时间
+    double                  mZGB;       //总股本
+    double                  mLTGB;      //流通股本
+    QStringList             mReferCodeList;     //关联的其他代码
 
 };
 
@@ -53,7 +57,7 @@ struct ShareHolder{
     QString     mName;
     double      mShareCount;
     double      mFundPercent;
-    ShareWorkingDate   mDate;
+    QDate       mDate;
 
     ShareHolder(){
         mShareCount = 0;
@@ -95,9 +99,9 @@ struct  ShareBonus
     QString             mCode;
     double              mSZZG; //送转股比例
     double              mXJFH;  //现金分红
-    ShareWorkingDate           mGQDJR; //股权登记日
-    ShareWorkingDate           mYAGGR; //预案公告日
-    ShareWorkingDate           mDate;  //报告日期的记录
+    QDate           mGQDJR; //股权登记日
+    QDate           mYAGGR; //预案公告日
+    QDate           mDate;  //报告日期的记录
     ShareBonus()
     {
         mSZZG = 0.0;
@@ -111,6 +115,18 @@ typedef QMap<QString, ShareBonusList> ShareBonusMap;
 Q_DECLARE_METATYPE(ShareBonus)
 Q_DECLARE_METATYPE(ShareBonusList)
 
+struct ShareHSGTChgData{
+    double      mVolChg;
+    double      mVolToalChgPercent;
+    double      mVolMutalChangePercent;
+
+    ShareHSGTChgData()
+    {
+        mVolChg = 0.0;
+        mVolToalChgPercent = 0.0;
+        mVolMutalChangePercent = 0.0;
+    }
+};
 typedef struct North_South_Bound_Data
 {
     QString             mCode;
@@ -121,13 +137,11 @@ typedef struct North_South_Bound_Data
     double              mPure;
     double              mChange;
     qint64              mVolTotal;
-    qint64              mVolChange;
     double              mVolMutablePercent;
-    double              mVolCh1;
-    double              mVolCh5;
-    double              mVolCh10;
+    double              mVolTotalChangePercent;
+    QMap<QString,   ShareHSGTChgData>       mCounterMap;      // "1,3,5,10,m,jd,y"
     bool                mIsTop10;
-    ShareWorkingDateTime       mDate;
+    QDate               mDate;
 
     North_South_Bound_Data()
     {
@@ -137,11 +151,9 @@ typedef struct North_South_Bound_Data
         mPure = 0.0;
         mChange = 0.0;
         mVolTotal = 0;
-        mVolChange = 0;
         mVolMutablePercent = 0.0;
-        mVolCh1 = 0.0;
-        mVolCh5 = 0.0;
-        mVolCh10 = 0.0;
+        mIsTop10 = false;
+        mCounterMap.clear();
     }
 
     bool operator <(const North_South_Bound_Data& data) const
@@ -154,6 +166,8 @@ typedef struct North_South_Bound_Data
         return ((*this).mPure) > (data.mPure);
     }
 
+    double  volChg(const QString& type) const {return mCounterMap[type].mVolChg;}
+
 }ShareHsgt;
 
 typedef QList<ShareHsgt>       ShareHsgtList;
@@ -161,11 +175,60 @@ typedef QList<ShareHsgt>       ShareHsgtList;
 Q_DECLARE_METATYPE(ShareHsgt)
 Q_DECLARE_METATYPE(ShareHsgtList)
 
+struct      Counter{
+    qint64          mVolChg;
+    double          mMktCapChg;
+    double          mMktCapChgPercent;
+    double          mVolMutableChgPercent;
+    double          mVolTotalChgPercent;
+
+    Counter()
+    {
+        mVolChg = 0;
+        mMktCapChg = 0.0;
+        mMktCapChgPercent = 0.0;
+        mVolMutableChgPercent = 0.0;
+        mVolTotalChgPercent = 0.0;
+    }
+
+};
+
+typedef struct North_South_Bound_Data_Counter
+{
+    int                 mCode;
+    qint64              mVolTotal;
+    double              mMktCap;
+    double              mVolMutablePercent;
+    double              mVolTotalPercent;
+
+
+    Counter              mDay1;
+    Counter              mDay3;
+    Counter              mDay5;
+    Counter              mDay10;
+    Counter              mMonth;
+    Counter              mSeason;
+    Counter              mYear;
+    quint64              mDate;
+
+    North_South_Bound_Data_Counter()
+    {
+        mCode = 0;
+        mVolTotal = 0;
+        mVolMutablePercent = 0.0;
+        mVolTotalPercent = 0.0;
+        mDate = 0;
+    }
+
+}ShareHsgtCounter;
+
+typedef QList<ShareHsgtCounter>       ShareHsgtCounterList;
+
 struct ShareZjlx
 {
     QString             mCode;
     double              mPure;
-    ShareWorkingDateTime       mDate;
+    QDate               mDate;
 
     ShareZjlx()
     {
@@ -194,7 +257,7 @@ struct ShareRzRq
 {
     QString             mCode;
     double              mRZRQ;
-    ShareWorkingDateTime       mDate;
+    QDate               mDate;
 
     ShareRzRq()
     {

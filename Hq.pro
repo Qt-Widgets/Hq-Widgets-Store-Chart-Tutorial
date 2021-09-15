@@ -4,8 +4,23 @@
 #
 #-------------------------------------------------
 
-#include(./QtXlsx/QtXlsx.pri)
+# QXlsx code for Application Qt project
+QXLSX_PARENTPATH=$${PWD}/QtXlsx         # current QXlsx path is . (. means curret directory)
+QXLSX_HEADERPATH=$${QXLSX_PARENTPATH}/header/  # current QXlsx header path is ./header/
+QXLSX_SOURCEPATH=$${QXLSX_PARENTPATH}/source/  # current QXlsx source path is ./source/
+message("qt xlsx path:" + $${QXLSX_PARENTPATH})
+include($${QXLSX_PARENTPATH}/QXlsx.pri)
+
 QT       += core gui network sql concurrent
+android {
+ QT+= androidextras
+ }
+
+#win32{
+# QT += webkitwidgets
+#}
+
+CONFIG += c++11
 
 #DEFINES *= Q_QDOC
 #DEFINES *= HQ_RUNNABLE
@@ -27,6 +42,7 @@ SOURCES += main.cpp\
 #    webfile/webfile.cpp \
     exchange/qexchangerecordworker.cpp \
     exchange/qexchangefiledlg.cpp \
+    qshareforeignvolchangecounterthread.cpp \
     table/qstktablewidgetitem.cpp \
     table/HqTableWidget.cpp \
     table/qsharetablewidget.cpp \
@@ -69,17 +85,40 @@ SOURCES += main.cpp\
     qcontainerwidget.cpp \
     real/qsinanorthrealinfothread.cpp \
     real/qnorthflowinfodisplaywidget.cpp \
-    basic_info/qshareactivedateupdatethread.cpp \
-    data_structure/shareworkingdatetime.cpp \
     history/sharehistoryreadthread.cpp \
     history/qforignvolcheckdlg.cpp \
-    table/qshareforeignvoltablewidget.cpp
+    table/qshareforeignvoltablewidget.cpp \
+    utils/hqinfoparseutil.cpp \
+    qsahreoptwidget.cpp \
+    real/qhqindexthread.cpp \
+    zchxdisplaywidget.cpp \
+    zchxmainwindow.cpp \
+    real/qhqeastmoneyrealinfothread.cpp \
+    real/qhqsysteminfowidget.cpp \
+    real/hqkuaixun.cpp \
+    qkuaixunlistwidget.cpp \
+    qhqdisplaywidget.cpp \
+    table/zchxhqdisplaywidget.cpp \
+    qpopwindow.cpp \
+    colortextlabel.cpp \
+    qeastmoneyshareholderfetcher.cpp \
+    table/qshareexchangetable.cpp \
+    table/northboundmoneyflowtablewidget.cpp \
+    table/northboundtop10displaywidget.cpp \
+    table/northboundsharevolwidget.cpp \
+    qetfscalethread.cpp \
+    northbundwidget.cpp \
+    date/annualcloseddaydisclosure.cpp \
+    date/qshareactivedateupdatethread.cpp \
+    date/shareworkingdatetime.cpp \
+    history/qsharehsgthistorychangethread.cpp \
+    qshareexchangedisplaywidget.cpp \
+    table/HqMergeTableWidget.cpp
 
 HEADERS  += dialog.h \
     qeastmoneylhbthread.h \
     qglobalapplication.h \
 #    qthook.h \
-    dbservices.h \
     qindexframe.h \
     qindexwidget.h \
     history/qsharehistoryinfomgr.h \
@@ -88,6 +127,7 @@ HEADERS  += dialog.h \
 #    webfile/webfile.h \
     exchange/qexchangerecordworker.h \
     exchange/qexchangefiledlg.h \
+    qshareforeignvolchangecounterthread.h \
     table/qstktablewidgetitem.h \
     utils/comdatadefines.h \
     table/HqTableWidget.h \
@@ -98,7 +138,8 @@ HEADERS  += dialog.h \
     table/qblocktablewidget.h \
     dbservices/hqdbdatabase.h \
     dbservices/dbservices.h \
-    dbservices/hqdatadefines.h \    
+    dbservices/hqdatadefines.h \     \
+    zchxdisplaywidget.h \
     history/qsharehistorydialog.h \
     history/qsharegraphicwidget.h \
     history/qhkexchangevoldataprocess.h \
@@ -132,11 +173,34 @@ HEADERS  += dialog.h \
     qcontainerwidget.h \
     real/qsinanorthrealinfothread.h \
     real/qnorthflowinfodisplaywidget.h \
-    basic_info/qshareactivedateupdatethread.h \
-    data_structure/shareworkingdatetime.h \
     history/sharehistoryreadthread.h \
     history/qforignvolcheckdlg.h \
-    table/qshareforeignvoltablewidget.h
+    table/qshareforeignvoltablewidget.h \
+    utils/hqinfoparseutil.h \
+    qsahreoptwidget.h \
+    real/qhqindexthread.h \
+    zchxmainwindow.h \
+    real/qhqeastmoneyrealinfothread.h \
+    real/qhqsysteminfowidget.h \
+    real/hqkuaixun.h \
+    qkuaixunlistwidget.h \
+    qhqdisplaywidget.h \
+    table/zchxhqdisplaywidget.h \
+    qpopwindow.h \
+    colortextlabel.h \
+    qeastmoneyshareholderfetcher.h \
+    table/qshareexchangetable.h \
+    table/northboundmoneyflowtablewidget.h \
+    table/northboundtop10displaywidget.h \
+    table/northboundsharevolwidget.h \
+    qetfscalethread.h \
+    northbundwidget.h\
+    date/annualcloseddaydisclosure.h \
+    date/qshareactivedateupdatethread.h \
+    date/shareworkingdatetime.h \
+    history/qsharehsgthistorychangethread.h \
+    qshareexchangedisplaywidget.h \
+    table/HqMergeTableWidget.h
 
 FORMS    += dialog.ui \
     qexchangedatemangagedialog.ui \
@@ -146,7 +210,14 @@ FORMS    += dialog.ui \
     qdatamgrwidget.ui \
     qsharecodenamelable.ui \
     real/qnorthflowinfodisplaywidget.ui \
-    history/qforignvolcheckdlg.ui
+    history/qforignvolcheckdlg.ui \
+    qsahreoptwidget.ui \
+    zchxmainwindow.ui \
+    real/qhqsysteminfowidget.ui \
+    qkuaixunlistwidget.ui \
+    table/zchxhqdisplaywidget.ui \
+    qpopwindow.ui \
+    qshareexchangedisplaywidget.ui
 
 RESOURCES += \
     image.qrc
@@ -169,3 +240,15 @@ DISTFILES += \
     android/assets/profiles.ini
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+
+ANDROID_ABIS = armeabi-v7a
+
+ANDROID_EXTRA_LIBS =
+
+contains(ANDROID_TARGET_ARCH,) {
+    ANDROID_EXTRA_LIBS =
+
+    ANDROID_ABIS = \
+        armeabi-v7a \
+        x86
+}
